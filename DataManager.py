@@ -14,20 +14,21 @@ import numpy as np
 from datetime import datetime
 from datetime import timedelta
 import json
+import os
+
+path = os.getcwd()
 yf.pdr_override()
 pd.options.display.float_format = '{:,.2f}'.format
 #----------------------------------------------------------- Class Definition
 class DataManager():
     def __init__(self, mode):
         self.mode = mode
-        #self.initialize_params(dbname)
         self.today = (datetime.now()).strftime('%Y-%m-%d')
         self.end_date = (datetime.now()+ timedelta(days=1)).strftime('%Y-%m-%d')  #last date for download
     
     def initialize_params(self, dbname):
-        config = json.load(open("config.json","r"))
+        config = json.load(open(path+"/config.json","r"))
         self.con = db.create_engine(config[dbname])
-        # self.fail_path = config['failed']
         self.init_path = config['init']
         self.add_path = config['add']
         
