@@ -217,8 +217,11 @@ class optionDataManager(DataManager):
 
     def update_data(self, stocks):
         for s in stocks:
-            if self.check_updated(s) == 'updated': #if updated then skip
-                continue
+            print("Downloading Data for ", s)
+            if self.mode != 'init':
+                update_flag = self.check_updated(s)
+                if update_flag == 'updated': #if updated then skip
+                    continue
             
             success, exps = self.get_exp(s) # getting expirations
             if not success:
@@ -236,4 +239,5 @@ class optionDataManager(DataManager):
                 
     def run(self):
         tickers = self.get_tickers() #get ticker for init/update based on mode
-        self.update_data(tickers['update'])  #  update today option data
+
+        self.update_data(tickers[self.mode])  #  update today option data

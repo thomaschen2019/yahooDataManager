@@ -8,7 +8,7 @@ Created on Tue Jun  2 08:21:37 2020
 from DataManager import minuteDataManager, dailyDataManager, optionDataManager
 
 if __name__ == "__main__":
-    debug = True
+    debug = False
     x = dailyDataManager('init', debug)
     y = minuteDataManager('init', debug) 
     z = optionDataManager('init', debug)
