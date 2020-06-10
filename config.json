@@ -1,0 +1,7 @@
+{
+    "daily": "sqlite:///C:/Users/zheji/Desktop/TradingTools/dailyDB.sqlite",
+    "minute": "sqlite:///C:/Users/zheji/Desktop/TradingTools/minuteDB.sqlite",
+    "option": "sqlite:///C:/Users/zheji/Desktop/TradingTools/optionsDB.sqlite",
+    "init": "C:/Users/zheji/Desktop/TradingTools/constituents_csv.csv",
+    "add": "C:/Users/zheji/Desktop/TradingTools/newTicker.txt"
+}

@@ -57,7 +57,7 @@ class DataManager():
 
     def write_data(self, data, tablename, mode):
         if self.debug:
-            print(data.tail(5))
+            print(data.head(5))
         else:
             data.to_sql(tablename, self.con, if_exists=mode, index=False)
 
