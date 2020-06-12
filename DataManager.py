@@ -239,5 +239,48 @@ class optionDataManager(DataManager):
                 
     def run(self):
         tickers = self.get_tickers() #get ticker for init/update based on mode
-
         self.update_data(tickers[self.mode])  #  update today option data
+
+class recDataManager(DataManager):
+    def __init__(self, mode, debug):
+        super().__init__(mode)
+        self.initialize_params('rec')
+        self.limit = 2
+        self.debug = debug
+
+    def single_stock_download(self, s, start_date, mode):
+        print("Downloading ", s)
+        try:
+            ticker = yf.Ticker(s)
+            rec = ticker.recommendations
+            rec['ticker'] = s 
+            rec['tmp'] = rec.index 
+            rec['Date'] = rec['tmp'].apply(lambda x: x.strftime('%Y-%m-%d'))
+            rec['Time'] = rec['tmp'].apply(lambda x: x.strftime("%H:%M:%S"))
+            del rec['tmp']
+            rec = rec[rec['Date'] > start_date]
+            self.write_data(rec, 'recommendation', mode)
+            return True
+        except Exception as e:
+            print("Failed to download {} for reason: {} ".format(s, e))
+            return False
+
+    def initial_download(self, stocks):
+        last_update = '2010-01-01'
+        try:
+            last_update = self.check_updated('recommendation') # last update can be 'updated' or last updated date e.g '2020-06-05'
+        except:
+            print("Didn't find last update")
+            print(last_update)
+        if last_update != 'updated':  # the script has not been called today
+            for s in stocks:
+                num_counts = 1
+                while(num_counts < self.limit):
+                    flag = self.single_stock_download(s, last_update, 'append')
+                    if flag:
+                        break
+                    num_counts = num_counts + 1
+                
+    def run(self):
+        tickers = self.get_tickers()
+        self.initial_download(tickers[self.mode])  # initialize/update data
