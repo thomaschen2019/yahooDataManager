@@ -14,7 +14,7 @@ if __name__ == "__main__":
     y = minuteDataManager('update', debug) 
     z = optionDataManager('update', debug)
     r = recDataManager('update', debug)
-    x.run()
+    x.run('2012-01-01')
     y.run()
     z.run()
     r.run()

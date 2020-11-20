@@ -25,13 +25,13 @@ class DataManager():
         self.mode = mode
         self.today = (datetime.now()).strftime('%Y-%m-%d')
         self.end_date = (datetime.now()+ timedelta(days=1)).strftime('%Y-%m-%d')  #last date for download
-    
+
     def initialize_params(self, dbname):
         config = json.load(open(path+"/config.json","r"))
         self.con = db.create_engine(config[dbname])
         self.init_path = config['init']
         self.add_path = config['add']
-        
+
     def check_updated(self, s):
         last_update = pd.read_sql(s, self.con)
         if last_update.shape[0] == 0:
@@ -41,7 +41,7 @@ class DataManager():
             print("Already Updated ", s)
             return 'updated'
         return last_update
-    
+
     def get_tickers(self):
         if self.mode == 'init':
             return {'init':pd.read_csv(self.init_path).Ticker.unique(),
@@ -52,7 +52,7 @@ class DataManager():
                 added_stocks = [line for line in f if line not in update_stocks]
             return {'init':added_stocks,
                     'update':update_stocks}
-    
+
 
 
     def write_data(self, data, tablename, mode):
@@ -74,8 +74,8 @@ class DataManager():
                     clean.to_sql(table, self.con, if_exists = 'replace')
             except:
                 print("Error Occured Checking Data for ", table)
-                
-                
+
+
 class dailyDataManager(DataManager):
     def __init__(self, mode, debug):
         super().__init__(mode)
@@ -83,11 +83,11 @@ class dailyDataManager(DataManager):
         self.limit = 3
         self.debug = debug
 
-    def single_stock_download(self, s, start, mode):
+    def single_stock_download(self, s, start_date, mode):
         print("Downloading ", s)
         try:
-            data = yf.download(s, start=start, end=self.end_date)
-            data = data[data.index > start]  # start is t-1
+            data = yf.download(s, start=start_date, end=self.end_date)
+            data = data[data.index > start_date]  # start is t-1
             data = data.reset_index()
             data['Date'] = data.Date.apply(lambda x: x.strftime('%Y-%m-%d'))
             self.write_data(data, s, mode)
@@ -96,30 +96,30 @@ class dailyDataManager(DataManager):
             print("Failed to download ", s)
             return False
 
-    def initial_download(self, stocks):
+    def initial_download(self, stocks, start_date):
         for s in stocks:
             num_counts = 1
             while(num_counts < self.limit):
-                flag = self.single_stock_download(s, '2018-01-01', 'replace')
+                flag = self.single_stock_download(s, start_date, 'replace')
                 if flag:
                     break
                 num_counts = num_counts + 1
 
     def update_data(self, stocks):
         for s in stocks:
-            last_update = self.check_updated(s)
-            if last_update != 'updated':
+            last_update_date = self.check_updated(s)
+            if last_update_date != 'updated':
                 num_counts = 1
                 while(num_counts < self.limit):
-                    flag = self.single_stock_download(s, last_update, 'append')
+                    flag = self.single_stock_download(s, last_update_date, 'append')
                     if flag:
                         break
                     num_counts = num_counts + 1
-                
-    def run(self):
+
+    def run(self, start_date):
         tickers = self.get_tickers()
         self.update_data(tickers['update'])  # first update data
-        self.initial_download(tickers['init'])  # initialize/add new tickers
+        self.initial_download(tickers['init'], start_date)  # initialize/add new tickers
 
 
 class minuteDataManager(DataManager):
@@ -134,13 +134,13 @@ class minuteDataManager(DataManager):
         try:
             ticker = yf.Ticker(s)
             df = ticker.history(period=length, interval='1m')
-            
+
             df['Datetime'] = df.index
             df['Date'] = df['Datetime'].apply(lambda x: x.strftime('%Y-%m-%d'))
             df['Time'] = df['Datetime'].apply(lambda x: x.strftime("%H:%M:%S"))
             df = df[['Date','Time', 'Open', 'High', 'Low', 'Close', 'Volume']]
             df.index = [i for i in range(df.shape[0])]
-            
+
             self.write_data(df, s, mode)
             return True
         except Exception as e:
@@ -170,7 +170,7 @@ class minuteDataManager(DataManager):
                     if flag:
                         break
                     num_counts = num_counts + 1
-                
+
     def run(self):
         tickers = self.get_tickers() #get ticker for init/update based on mode
         self.update_data(tickers['update'])  # first update data
@@ -189,7 +189,7 @@ class optionDataManager(DataManager):
             ticker = yf.Ticker(s)
             chain = ticker.option_chain(exp)
             calls = chain.calls
-            puts = chain.puts 
+            puts = chain.puts
             calls['right'] = 'C'
             puts['right'] = 'P'
             df = pd.concat([calls, puts])
@@ -206,7 +206,7 @@ class optionDataManager(DataManager):
             print("Failed to download options for {} with expiration {}".format(s, exp))
             print("Failed Reason: ", e)
             return False
-        
+
     def get_exp(self, s):
         try:
             ticker = yf.Ticker(s)
@@ -222,12 +222,12 @@ class optionDataManager(DataManager):
                 update_flag = self.check_updated(s)
                 if update_flag == 'updated': #if updated then skip
                     continue
-            
+
             success, exps = self.get_exp(s) # getting expirations
             if not success:
                 print("Getting expirations unsucessful")
                 continue
-            
+
             #successful got exps
             for exp in exps:
                 num_counts = 1
@@ -236,7 +236,7 @@ class optionDataManager(DataManager):
                     if flag:
                         break
                     num_counts = num_counts + 1
-                
+
     def run(self):
         tickers = self.get_tickers() #get ticker for init/update based on mode
         self.update_data(tickers[self.mode])  #  update today option data
@@ -253,8 +253,8 @@ class recDataManager(DataManager):
         try:
             ticker = yf.Ticker(s)
             rec = ticker.recommendations
-            rec['ticker'] = s 
-            rec['tmp'] = rec.index 
+            rec['ticker'] = s
+            rec['tmp'] = rec.index
             rec['Date'] = rec['tmp'].apply(lambda x: x.strftime('%Y-%m-%d'))
             rec['Time'] = rec['tmp'].apply(lambda x: x.strftime("%H:%M:%S"))
             del rec['tmp']
@@ -280,7 +280,7 @@ class recDataManager(DataManager):
                     if flag:
                         break
                     num_counts = num_counts + 1
-                
+
     def run(self):
         tickers = self.get_tickers()
         self.initial_download(tickers[self.mode])  # initialize/update data

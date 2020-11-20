@@ -10,10 +10,11 @@ from DataManager import minuteDataManager, dailyDataManager, optionDataManager, 
 if __name__ == "__main__":
     debug = False
     x = dailyDataManager('init', debug)
-    y = minuteDataManager('init', debug) 
-    z = optionDataManager('init', debug)
-    r = recDataManager('init', debug)
-    x.run()
-    y.run()
-    z.run()
-    r.run()
+    # y = minuteDataManager('init', debug)
+    # z = optionDataManager('init', debug)
+    # r = recDataManager('init', debug)
+    x.run('2012-01-01')
+    # y.run()
+    # z.run()
+    # r.run()
+

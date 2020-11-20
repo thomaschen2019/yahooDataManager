@@ -1,5 +1,5 @@
 {
-    "daily": "sqlite:///C:/Users/zheji/Desktop/TradingTools/dailyDB.sqlite",
+    "daily": "sqlite:///C:/Users/zheji/Desktop/TradingTools/dailyDB2.sqlite",
     "minute": "sqlite:///C:/Users/zheji/Desktop/TradingTools/minuteDB.sqlite",
     "option": "sqlite:///C:/Users/zheji/Desktop/TradingTools/optionsDB.sqlite",
     "rec": "sqlite:///C:/Users/zheji/Desktop/TradingTools/fundamentalDB.sqlite",
